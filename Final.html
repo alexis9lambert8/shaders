@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Final</title>
+    <script src="https://threejs.org/build/three.js"></script>
+    <script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://threejs.org/examples/js/libs/dat.gui.min.js"></script>
+    <script src="https://threejs.org/examples/js/loaders/OBJLoader.js"></script>
+    <script src="https://threejs.org/examples/js/loaders/MTLLoader.js"></script>
+
+    <script>
+      function mainFunction()
+      {
+        let renderer = new THREE.WebGLRenderer({antialias: true});
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+
+        // Sets background color to blue
+        renderer.setClearColor(0xd6e4e7, 1);
+        document.body.appendChild(renderer.domElement);
+
+        let scene = new THREE.Scene();
+
+        let aspect = window.innerWidth / window.innerHeight;
+
+        let camera = new THREE.PerspectiveCamera(30, aspect, 1, 1000);
+        camera.position.y = 5;
+        camera.position.z = 30;
+        camera.position.x = -0.25;
+        scene.add(camera);
+
+        let loader = new THREE.CubeTextureLoader();
+        loader.setPath("./Textures/")
+        let cubeTexture = loader.load([
+          "posx.jpg", "negx.jpg",
+          "posy.jpg", "negy.jpg",
+          "posz.jpg", "negz.jpg"
+        ]);
+
+        scene.background = cubeTexture;
+
+        // Lights for scene
+        let keyLight = new THREE.DirectionalLight(0xFFBF80, 1.0);
+        keyLight.position.set(-1, 0.5, 1);
+
+        let fillLight = new THREE.DirectionalLight(0x8080FF, 0.5);
+        fillLight.position.set(-1, 0.5, 1);
+
+        let backLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        backLight.position.set(1, -0.5, -1).normalize();
+
+        let ambientLight = new THREE.AmbientLight(0xFFFFFF, 0.3);
+
+        scene.add(keyLight);
+        scene.add(fillLight);
+        scene.add(backLight);
+        scene.add(ambientLight);
+
+        let material1 = new THREE.MeshPhongMaterial();
+        let material2 = new THREE.MeshPhongMaterial();
+        let material3 = new THREE.MeshPhongMaterial();
+        let material4 = new THREE.MeshPhongMaterial();
+        let material5 = new THREE.MeshPhongMaterial();
+        let material6 = new THREE.MeshPhongMaterial();
+        let material7 = new THREE.MeshPhongMaterial();
+        let material8 = new THREE.MeshPhongMaterial();
+        let material9 = new THREE.MeshPhongMaterial();
+        let material10 = new THREE.MeshPhongMaterial();
+
+        let geometry = new THREE.BoxGeometry(1, 1, 1);
+        let cube1 = new THREE.Mesh(geometry, material1);
+        let cube2 = new THREE.Mesh(geometry, material2);
+        let cube3 = new THREE.Mesh(geometry, material3);
+        let cube4 = new THREE.Mesh(geometry, material4);
+        let cube5 = new THREE.Mesh(geometry, material5);
+        let cube6 = new THREE.Mesh(geometry, material6);
+        let cube7 = new THREE.Mesh(geometry, material7);
+        let cube8 = new THREE.Mesh(geometry, material8);
+        let cube9 = new THREE.Mesh(geometry, material9);
+        let cube10 = new THREE.Mesh(geometry, material10);
+
+        let blocks = [cube1, cube2, cube3, cube4, cube5, cube6, cube7, cube8, cube9, cube10];
+
+        let trX = -5.0;
+
+        for (block in blocks)
+        {
+          blocks[block].translateX(trX);
+          scene.add(blocks[block]);
+          trX += 1.0;
+        }
+
+        function colorBlocks()
+        {
+          blocks[0].material.color.setHex(0xafdae3);
+          blocks[1].material.color.setHex(0xbfead3);
+          blocks[2].material.color.setHex(0xd0e297);
+          blocks[3].material.color.setHex(0xe1d99c);
+          blocks[4].material.color.setHex(0xe1d58f);
+          blocks[5].material.color.setHex(0xf6c98a);
+          blocks[6].material.color.setHex(0xebb283);
+          blocks[7].material.color.setHex(0xeda277);
+          blocks[8].material.color.setHex(0xf38576);
+          blocks[9].material.color.setHex(0xf48a78);
+          render();
+        }
+
+        function whiteBlocks()
+        {
+          blocks[0].material.color.setHex(0xffffff);
+          blocks[1].material.color.setHex(0xffffff);
+          blocks[2].material.color.setHex(0xffffff);
+          blocks[3].material.color.setHex(0xffffff);
+          blocks[4].material.color.setHex(0xffffff);
+          blocks[5].material.color.setHex(0xffffff);
+          blocks[6].material.color.setHex(0xffffff);
+          blocks[7].material.color.setHex(0xffffff);
+          blocks[8].material.color.setHex(0xffffff);
+          blocks[9].material.color.setHex(0xffffff);
+          render();
+        }
+
+        function render()
+        {
+          renderer.render(scene, camera);
+        }
+
+        function swap(array, one, two)
+        {
+          var temp = array[one];
+          array[one] = array[two];
+          array[two] = temp;
+          updateValues(array, one, two);
+        }
+
+        let bubbleIndex = 0;
+        let countdown = 0;
+
+        function bubbleSort(array, n)
+        {
+          if (array[bubbleIndex] > array[bubbleIndex + 1])
+          {
+            swap(array, bubbleIndex, bubbleIndex + 1);
+            render();
+            return;
+          }
+
+          bubbleIndex++;
+
+          if (bubbleIndex >= n - 1)
+          {
+            countdown++;
+
+            if (countdown >= n - 1)
+            {
+              clearInterval(interval);
+              colorBlocks();
+            }
+
+            bubbleIndex = 0;
+          }
+        }
+
+        let index = 0;
+
+        function selectionSort(array, n)
+        {
+          if (index >= n - 1)
+          {
+            clearInterval(interval);
+            colorBlocks();
+            return;
+          }
+
+          var minIndex = index;
+
+          for (var j = index + 1; j < n; j++)
+          {
+            if (array[j] < array[minIndex])
+            {
+              minIndex = j;
+            }
+          }
+
+          swap(array, index, minIndex);
+          render();
+
+          index++;
+        }
+
+        let insertIndex = 0;
+
+        function insertionSort(array, n)
+        {
+          let gap, val;
+
+          insertIndex++;
+
+          if (insertIndex >= n)
+          {
+            clearInterval(interval);
+            colorBlocks();
+            return;
+          }
+
+          val = array[insertIndex];
+          gap = insertIndex;
+
+          for (j = gap - 1; j >= 0 && array[j] > val; j--)
+          {
+            swap(array, j+1, j);
+            render();
+            gap--;
+          }
+
+          array[gap] = val;
+          blocks[gap].scale.y = array[gap];
+          blocks[gap].scale.z = array[gap];
+          render();
+        }
+
+        let arrayNumbers = [];
+        createArray();
+
+        function createArray()
+        {
+          arrayNumbers = [];
+
+          for (var i = 0; i < blocks.length; i++)
+          {
+            arrayNumbers.push(Math.random() * 10);
+            blocks[i].scale.y = arrayNumbers[i];
+            blocks[i].scale.z = arrayNumbers[i];
+          }
+          render();
+        }
+
+        function updateValues(array, one, two)
+        {
+          blocks[one].scale.y = array[one];
+          blocks[two].scale.y = array[two];
+
+          blocks[one].scale.z = array[one];
+          blocks[two].scale.z = array[two];
+        }
+
+        let cameraControls = new THREE.OrbitControls(camera, renderer.domElement);
+        cameraControls.addEventListener("change", render, false);
+
+
+        let gui = new dat.GUI();
+
+        let controller = {sorting: ""};
+
+        var interval;
+
+        function changeSort()
+        {
+          clearInterval(interval);
+          whiteBlocks();
+          createArray();
+
+          if (controller.sorting == "Bubble Sort")
+          {
+            bubbleIndex = 0;
+            countdown = 0;
+            interval = setInterval(bubbleSort, 500, arrayNumbers, 10);
+          }
+          else if (controller.sorting == "Selection Sort")
+          {
+            index = 0;
+            interval = setInterval(selectionSort, 1000, arrayNumbers, 10);
+          }
+          else
+          {
+            insertIndex = 0;
+            interval = setInterval(insertionSort, 1000, arrayNumbers, 10);
+          }
+        }
+
+        gui.add(controller, "sorting", ["", "Bubble Sort", "Selection Sort",
+        "Insertion Sort"]).name("Sorting Algorithm").onChange(changeSort);
+
+        render();
+
+        function resize()
+        {
+          renderer.setSize(window.innerWidth, window.innerHeight);
+          camera.aspect = window.innerWidth / window.innerHeight;
+          camera.updateProjectionMatrix();
+
+          render();
+        }
+
+        window.addEventListener("resize", resize, false);
+      }
+    </script>
+  </head>
+  <body onload="mainFunction();">
+    <h1>Alexis Lambert and Natasha Zdravkovic</h1>
+  </body>
+</html>

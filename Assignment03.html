@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Assignment 3</title>
+    <script src="https://threejs.org/build/three.js"></script>
+    <script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://threejs.org/examples/js/libs/dat.gui.min.js"></script>
+    <script src="https://threejs.org/examples/js/loaders/OBJLoader.js"></script>
+    <script src="https://threejs.org/examples/js/loaders/MTLLoader.js"></script>
+
+    <script id='vertexShader' type='x-shader/x-vertex'>
+      precision highp float;
+
+      attribute vec3 position;
+      attribute vec3 normal;
+
+      uniform mat4 modelViewMatrix;
+      uniform mat4 projectionMatrix;
+      uniform mat3 normalMatrix;
+
+      varying vec3 vNormal;
+
+      void main()
+      {
+        vNormal = normalize(normalMatrix*normal);
+        gl_Position = projectionMatrix*modelViewMatrix*vec4(position, 1.0);
+      }
+    </script>
+
+    <script id='fragmentShader' type='x-shader/x-fragment'>
+      precision highp float;
+
+      varying vec3 vNormal;
+
+      void main()
+      {
+        vec3 mattColor = (normalize(vNormal + 0.25)) / 2.0;
+        gl_FragColor = vec4(mattColor, 0.5);
+      }
+    </script>
+
+    <script>
+      function mainFunction()
+      {
+        let renderer = new THREE.WebGLRenderer({antialias: true});
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+
+        // Sets background color to blue
+        renderer.setClearColor(0xd6e4e7, 1);
+        document.body.appendChild(renderer.domElement);
+
+        let scene = new THREE.Scene();
+
+        let aspect = window.innerWidth / window.innerHeight;
+
+        let newMaterial = new THREE.RawShaderMaterial({
+          side: THREE.DoubleSide,
+          fragmentShader: document.getElementById('fragmentShader').textContent,
+          vertexShader: document.getElementById('vertexShader').textContent
+        });
+
+        let grassTexture = new THREE.TextureLoader().load("wood_floor.png");
+        let material = new THREE.MeshLambertMaterial({map: grassTexture});
+        let geometry = new THREE.PlaneGeometry(20, 20);
+        let field = new THREE.Mesh(geometry, material);
+        field.rotateX(-Math.PI / 2);
+        scene.add(field);
+
+
+        let camera = new THREE.PerspectiveCamera(30, aspect, 1, 1000);
+        camera.position.y = 5;
+        camera.position.z = 15;
+        camera.position.x = -0.25;
+        scene.add(camera);
+
+        // Lights for scene
+        let keyLight = new THREE.DirectionalLight(0xFFBF80, 1.0);
+        keyLight.position.set(-1, 0.5, 1);
+
+        let fillLight = new THREE.DirectionalLight(0x8080FF, 0.5);
+        fillLight.position.set(1, 0, 1);
+
+        let backLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        backLight.position.set(1, -0.5, -1).normalize();
+
+        let ambientLight = new THREE.AmbientLight(0xFFFFFF, 0.3);
+
+        scene.add(keyLight);
+        scene.add(fillLight);
+        scene.add(backLight);
+        scene.add(ambientLight);
+
+        let coffeeTableInfo = {
+          useShader: false,
+          mtlPathName: "./ObjectFiles/CoffeeTable/Center_Table.mtl",
+          objPathName: "./ObjectFiles/CoffeeTable/Center_Table.obj",
+          translateVector: new THREE.Vector3(2, 0, -1),
+          rotateVector: new THREE.Vector3(0,0,0),
+          scale: 2.5
+        };
+
+        let couchInfo = {
+          useShader: true,
+          mtlPathName: "./ObjectFiles/Couches/DesignSofa1.mtl",
+          objPathName: "./ObjectFiles/Couches/DesignSofa1.obj",
+          translateVector: new THREE.Vector3(.5, 0, -4),
+          rotateVector: new THREE.Vector3(0,0,0),
+          scale: 3
+        };
+
+        let lampInfo = {
+          useShader: false,
+          mtlPathName: "./ObjectFiles/Lamp/lamp.mtl",
+          objPathName: "./ObjectFiles/Lamp/lamp.obj",
+          translateVector: new THREE.Vector3(-7.5, 0, -5.5),
+          rotateVector: new THREE.Vector3(0,0,0),
+          scale: 1.7
+        };
+
+        let rugInfo = {
+          useShader: false,
+          mtlPathName: "./ObjectFiles/Rug/Rug.mtl",
+          objPathName: "./objectFiles/Rug/Rug.obj",
+          translateVector: new THREE.Vector3(0.5, 0, -1.5),
+          rotateVector: new THREE.Vector3(-Math.PI/2, 0, 0),
+          scale: 3
+        };
+
+        function render()
+        {
+          renderer.render(scene, camera);
+        }
+
+        function loadModel(objectInfo)
+        {
+          let mtlLoader = new THREE.MTLLoader();
+          mtlLoader.load(objectInfo.mtlPathName, onMTLLoad);
+
+          // Loads material to object
+          function onMTLLoad(mtl)
+          {
+            mtl.preload();
+
+            // Sets up object
+            let objLoader = new THREE.OBJLoader();
+            objLoader.setMaterials(mtl);
+            objLoader.load(objectInfo.objPathName, onOBJLoad);
+          }
+
+          // Renders based on object
+          function onOBJLoad(obj)
+          {
+            let bBox = new THREE.Box3().setFromObject(obj);
+            let size = new THREE.Vector3();
+            bBox.getSize(size);
+            let maxBaseSize = Math.max(size.x, size.z);
+            obj.scale.multiplyScalar(objectInfo.scale / maxBaseSize);
+            obj.position.copy(objectInfo.translateVector);
+
+            obj.rotateX(objectInfo.rotateVector.x);
+            obj.rotateY(objectInfo.rotateVector.y);
+            obj.rotateZ(objectInfo.rotateVector.z);
+
+            if(objectInfo.useShader)
+            {
+              if(obj.material)
+                obj.material = newMaterial;
+              else
+                obj.children.forEach(function(e) {e.material = newMaterial;});
+            }
+
+            scene.add(obj);
+            render();
+          }
+        }
+
+        let coffeeTable = loadModel(coffeeTableInfo);
+        let couch = loadModel(couchInfo);
+        let rug = loadModel(rugInfo);
+        let lamp = loadModel(lampInfo);
+
+        let cameraControls = new THREE.OrbitControls(camera, renderer.domElement);
+        cameraControls.addEventListener("change", render, false);
+        render();
+
+        function resize()
+        {
+          renderer.setSize(window.innerWidth, window.innerHeight);
+          camera.aspect = window.innerWidth / window.innerHeight;
+          camera.updateProjectionMatrix();
+
+          render();
+        }
+
+        window.addEventListener("resize", resize, false);
+      }
+    </script>
+  </head>
+  <body onload="mainFunction();">
+    <h1>Alexis Lambert</h1>
+    <h2>PID: 3789207</h2>
+    <h2>Objects: <a href='https://free3d.com/3d-model/coffee-table-54484.html'>Table</a>,
+                  <a href='https://free3d.com/3d-model/design-sofa-85845.html'>Couch</a>,
+                  <a href='https://free3d.com/3d-model/-circular-throw-rug-v1--24953.html'>Rug</a>,
+                  <a href='https://free3d.com/3d-model/floor-lamp-zaha-light-94772.html'>Lamp</a></h2>
+  </body>
+</html>
